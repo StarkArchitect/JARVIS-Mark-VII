@@ -1,0 +1,22 @@
+# JARVIS user settings. Values here override safe defaults in jarvis/config.py.
+
+# Free models: "gemini-3.8-flash", "qwen/qwen3.8-27b", "meta-llama/llama-3.3-70b-instruct:free"
+model: gemini-3.8-flash
+
+temperature: 0.4
+max_tokens: 650
+
+# Number of user+assistant turns kept verbatim in context.
+history_turns: 12
+
+wake_word: jarvis
+tts_voice: en-GB-RyanNeural    # High-quality British neural voice (Edge TTS)
+stt_model: whisper-large-v3-turbo
+
+confirm_shell: true    # ask y/n before run_shell_command
+allow_paths:           # file tools may only touch these roots
+  - "~"
+  - "."
+
+max_tool_iters: 6
+log_level: INFO

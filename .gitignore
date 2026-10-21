@@ -1,0 +1,36 @@
+# Secrets & Environment variables
+.env
+*.env
+.env.*
+!.env.example
+
+# Local Data & SQLite Databases
+data/
+*.db
+*.db-shm
+*.db-wal
+screenshots/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Logs & temporary files
+*.log
+jarvis.log
+*.mp3
+.zhanlu/
+
+# IDE & Editor settings
+.vscode/
+.idea/
+*.swp
+
+# OS generated files
+Thumbs.db
+.DS_Store

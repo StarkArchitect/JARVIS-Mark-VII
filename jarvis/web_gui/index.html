@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J.A.R.V.I.S. // STARK INDUSTRIES HUD</title>
+  <style>
+    :root {
+      --bg: #030710;
+      --cyan: #00f0ff;
+      --cyan-dim: rgba(0, 240, 255, 0.25);
+      --cyan-glow: rgba(0, 240, 255, 0.6);
+      --gold: #ffbd00;
+      --gold-dim: rgba(255, 189, 0, 0.3);
+      --amber: #ff6a00;
+      --dark-card: rgba(8, 20, 36, 0.75);
+      --border: rgba(0, 240, 255, 0.3);
+      --font-mono: 'Consolas', 'Courier New', monospace;
+      --font-tech: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background: radial-gradient(circle at center, #071526 0%, #030710 100%);
+      color: #e0f7fa;
+      font-family: var(--font-tech);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Scanline effect */
+    body::before {
+      content: " ";
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background-size: 100% 4px;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    /* Top HUD Bar */
+    header {
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(4, 12, 24, 0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--cyan);
+      border-radius: 50%;
+      position: relative;
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+    .brand-logo::after {
+      content: '';
+      position: absolute;
+      top: 6px; left: 6px; width: 12px; height: 12px;
+      background: var(--cyan);
+      border-radius: 50%;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: #78909c;
+      letter-spacing: 1.5px;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: rgba(0, 240, 255, 0.08);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--cyan);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .provider-tag {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--gold);
+      border: 1px solid var(--gold-dim);
+      padding: 3px 10px;
+      border-radius: 4px;
+      background: rgba(255, 189, 0, 0.05);
+    }
+
+    .clock {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      color: #90caf9;
+      letter-spacing: 1px;
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 280px 1fr 380px;
+      gap: 16px;
+      padding: 16px 20px;
+      height: calc(100vh - 140px);
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    /* Left HUD: Telemetry */
+    .hud-panel {
+      background: var(--dark-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hud-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    }
+
+    .panel-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .gauge-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .gauge-card {
+      background: rgba(4, 16, 32, 0.6);
+      border: 1px solid rgba(0, 240, 255, 0.15);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .gauge-svg {
+      width: 70px;
+      height: 70px;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 6;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      transition: stroke-dashoffset 0.8s ease;
+      filter: drop-shadow(0 0 4px var(--cyan));
+    }
+
+    .gauge-val {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: -46px;
+      margin-bottom: 24px;
+    }
+
+    .gauge-lbl {
+      font-size: 11px;
+      color: #90a4ae;
+      letter-spacing: 1px;
+    }
+
+    .stat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+      padding-bottom: 6px;
+    }
+    .stat-k { color: #78909c; }
+    .stat-v { font-family: var(--font-mono); color: var(--cyan); }
+
+    .quick-tools {
+      margin-top: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .tool-btn {
+      background: rgba(0, 240, 255, 0.06);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      color: var(--cyan);
+      border-radius: 4px;
+      padding: 7px 6px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .tool-btn:hover {
+      background: rgba(0, 240, 255, 0.18);
+      box-shadow: 0 0 10px var(--cyan-dim);
+      transform: translateY(-1px);
+    }
+
+    /* Center HUD: Arc Reactor Canvas */
+    .center-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    #reactorCanvas {
+      width: 440px;
+      height: 440px;
+      max-width: 100%;
+      cursor: pointer;
+    }
+
+    .reactor-core-btn {
+      position: absolute;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 2px solid var(--cyan);
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.35) 0%, rgba(4, 18, 36, 0.85) 100%);
+      box-shadow: 0 0 25px var(--cyan-glow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      transition: all 0.25s;
+    }
+    .reactor-core-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 40px var(--cyan);
+    }
+    .reactor-core-btn.listening {
+      border-color: var(--amber);
+      background: radial-gradient(circle, rgba(255, 106, 0, 0.45) 0%, rgba(40, 15, 0, 0.85) 100%);
+      box-shadow: 0 0 40px var(--amber);
+    }
+
+    .mic-icon {
+      font-size: 24px;
+      margin-bottom: 2px;
+    }
+
+    /* Right HUD: Holographic Transcript */
+    .transcript-panel {
+      background: var(--dark-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05);
+      position: relative;
+    }
+
+    .transcript-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .messages-container {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      user-select: text;
+    }
+
+    .messages-container::-webkit-scrollbar {
+      width: 5px;
+    }
+    .messages-container::-webkit-scrollbar-thumb {
+      background: var(--cyan-dim);
+      border-radius: 3px;
+    }
+
+    .msg {
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.5;
+      animation: fadeIn 0.3s ease;
+      word-wrap: break-word;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: rgba(255, 189, 0, 0.1);
+      border: 1px solid var(--gold-dim);
+      color: #fff9e6;
+      max-width: 85%;
+    }
+
+    .msg.jarvis {
+      align-self: flex-start;
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #e0f7fa;
+      max-width: 90%;
+    }
+
+    .msg-author {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+      opacity: 0.7;
+      text-transform: uppercase;
+    }
+    .msg.user .msg-author { color: var(--gold); }
+    .msg.jarvis .msg-author { color: var(--cyan); }
+
+    /* Bottom Control Bar */
+    footer {
+      height: 80px;
+      background: rgba(4, 12, 24, 0.95);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 10;
+    }
+
+    .btn-action {
+      height: 46px;
+      padding: 0 18px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-ptt {
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan-dim);
+    }
+    .btn-ptt:hover {
+      background: var(--cyan);
+      color: #030710;
+      box-shadow: 0 0 20px var(--cyan);
+    }
+
+    .btn-stop {
+      background: rgba(255, 50, 50, 0.1);
+      border: 1px solid rgba(255, 80, 80, 0.5);
+      color: #ff5252;
+    }
+    .btn-stop:hover {
+      background: #ff5252;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(255, 80, 80, 0.6);
+    }
+
+    .btn-mute {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #90a4ae;
+    }
+    .btn-mute.active {
+      color: var(--gold);
+      border-color: var(--gold);
+      background: rgba(255, 189, 0, 0.1);
+    }
+
+    .input-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: rgba(0, 240, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 6px;
+    }
+
+    #chatInput {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-family: var(--font-tech);
+      font-size: 14px;
+      padding: 8px 12px;
+      user-select: text;
+    }
+    #chatInput::placeholder {
+      color: #546e7a;
+    }
+
+    .btn-send {
+      background: var(--cyan);
+      border: none;
+      color: #030710;
+      font-weight: 800;
+      border-radius: 4px;
+      padding: 8px 18px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-send:hover {
+      box-shadow: 0 0 15px var(--cyan);
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo"></div>
+      <div>
+        <div class="brand-title">J.A.R.V.I.S.</div>
+        <div class="brand-sub">STARK INDUSTRIES MARK VII</div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="status-badge" id="statusBadge">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">ONLINE</span>
+      </div>
+      <div class="provider-tag" id="providerTag">Provider: INITIALIZING</div>
+    </div>
+
+    <div class="clock" id="clockText">00:00:00</div>
+  </header>
+
+  <!-- Main HUD Grid -->
+  <main>
+    <!-- Left Column: Hardware Telemetry -->
+    <section class="hud-panel">
+      <div class="panel-title">SYSTEM TELEMETRY</div>
+
+      <div class="gauge-grid">
+        <div class="gauge-card">
+          <svg class="gauge-svg">
+            <circle class="gauge-bg" cx="35" cy="35" r="28" />
+            <circle class="gauge-fill" id="cpuCircle" cx="35" cy="35" r="28" />
+          </svg>
+          <div class="gauge-val" id="cpuVal">0%</div>
+          <div class="gauge-lbl">CPU LOAD</div>
+        </div>
+
+        <div class="gauge-card">
+          <svg class="gauge-svg">
+            <circle class="gauge-bg" cx="35" cy="35" r="28" />
+            <circle class="gauge-fill" id="ramCircle" cx="35" cy="35" r="28" />
+          </svg>
+          <div class="gauge-val" id="ramVal">0%</div>
+          <div class="gauge-lbl">MEMORY</div>
+        </div>
+      </div>
+
+      <div class="stat-list">
+        <div class="stat-item">
+          <span class="stat-k">BATTERY</span>
+          <span class="stat-v" id="batteryVal">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-k">DISK C:</span>
+          <span class="stat-v" id="diskVal">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-k">SYSTEM UPTIME</span>
+          <span class="stat-v" id="uptimeVal">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-k">CORE TEMP</span>
+          <span class="stat-v">NOMINAL</span>
+        </div>
+      </div>
+
+      <div class="quick-tools">
+        <button class="tool-btn" onclick="runQuickTool('get_system_stats')">⚡ STATS</button>
+        <button class="tool-btn" onclick="runQuickTool('plan')">📋 AGENDA</button>
+        <button class="tool-btn" onclick="runQuickTool('briefing')">🌅 BRIEFING</button>
+        <button class="tool-btn" onclick="runQuickTool('get_weather')">🌤️ WEATHER</button>
+        <button class="tool-btn" onclick="runQuickTool('take_screenshot')">📸 CAPTURE</button>
+        <button class="tool-btn" onclick="runQuickTool('cleantemp')">🧹 CLEAN DISK</button>
+      </div>
+    </section>
+
+    <!-- Center Column: Arc Reactor Visualizer -->
+    <section class="center-stage">
+      <canvas id="reactorCanvas" width="500" height="500"></canvas>
+      <div class="reactor-core-btn" id="coreBtn" onclick="toggleVoice()">
+        <div class="mic-icon">🎙️</div>
+        <div id="coreBtnText">SPEAK</div>
+      </div>
+    </section>
+
+    <!-- Right Column: Transcript Stream -->
+    <section class="transcript-panel">
+      <div class="transcript-header">
+        <span>HOLOGRAPHIC LOG</span>
+        <span style="font-size: 10px; color: var(--cyan); cursor: pointer;" onclick="clearTranscript()">CLEAR</span>
+      </div>
+      <div class="messages-container" id="messagesContainer">
+        <div class="msg jarvis">
+          <div class="msg-author">JARVIS</div>
+          At your service, Sir. All systems are fully operational. How may I assist you today?
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Control Bar -->
+  <footer>
+    <button class="btn-action btn-ptt" id="pttBtn" onclick="toggleVoice()">🎙️ PUSH TO TALK</button>
+    <button class="btn-action btn-stop" onclick="stopSpeech()">🛑 STOP</button>
+    <button class="btn-action btn-mute" id="muteBtn" onclick="toggleMute()">🔊 SOUND</button>
+
+    <div class="input-wrapper">
+      <input type="text" id="chatInput" placeholder="Enter command or question, Sir... (or press Space to speak)" />
+      <button class="btn-send" onclick="sendInput()">TRANSMIT</button>
+    </div>
+  </footer>
+
+  <script>
+    // Audio level & visualizer states
+    let audioLevel = 0.0;
+    let targetAudioLevel = 0.0;
+    let currentState = 'IDLE'; // IDLE, LISTENING, PROCESSING, SPEAKING
+    let isMuted = false;
+    let isRecording = false;
+
+    // Clock
+    setInterval(() => {
+      const d = new Date();
+      document.getElementById('clockText').textContent = d.toTimeString().split(' ')[0];
+    }, 1000);
+
+    // Canvas Arc Reactor
+    const canvas = document.getElementById('reactorCanvas');
+    const ctx = canvas.getContext('2d');
+    let angle = 0;
+
+    function drawReactor() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Smooth audio level interpolation
+      audioLevel += (targetAudioLevel - audioLevel) * 0.2;
+
+      // Color scheme based on state
+      let colorPrimary = '#00f0ff';
+      let colorSecondary = 'rgba(0, 240, 255, 0.4)';
+      if (currentState === 'LISTENING') {
+        colorPrimary = '#ff9100';
+        colorSecondary = 'rgba(255, 145, 0, 0.4)';
+      } else if (currentState === 'PROCESSING') {
+        colorPrimary = '#b388ff';
+        colorSecondary = 'rgba(179, 136, 255, 0.4)';
+      }
+
+      // Outer Rotating Ring
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+
+      ctx.strokeStyle = colorSecondary;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 195, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Outer ring dashed segments
+      ctx.setLineDash([8, 12]);
+      ctx.strokeStyle = colorPrimary;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, 210 + audioLevel * 15, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // Counter-rotating Inner Ring
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(-angle * 1.5);
+
+      ctx.strokeStyle = colorPrimary;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 160, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Radial ticks
+      const numTicks = 36;
+      for (let i = 0; i < numTicks; i++) {
+        const rad = (i * Math.PI * 2) / numTicks;
+        const tickLen = 6 + (i % 3 === 0 ? 8 : 0);
+        const x1 = Math.cos(rad) * 160;
+        const y1 = Math.sin(rad) * 160;
+        const x2 = Math.cos(rad) * (160 + tickLen);
+        const y2 = Math.sin(rad) * (160 + tickLen);
+        ctx.strokeStyle = colorSecondary;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Circular Audio Waveform Spectrum (40 bars)
+      const numBars = 48;
+      for (let i = 0; i < numBars; i++) {
+        const rad = (i * Math.PI * 2) / numBars + angle * 0.5;
+        const barBase = 120;
+        const barHeight = 8 + (audioLevel * 60) * (0.6 + 0.4 * Math.sin(i * 0.8 + angle * 4));
+        const x1 = cx + Math.cos(rad) * barBase;
+        const y1 = cy + Math.sin(rad) * barBase;
+        const x2 = cx + Math.cos(rad) * (barBase + barHeight);
+        const y2 = cy + Math.sin(rad) * (barBase + barHeight);
+
+        ctx.strokeStyle = colorPrimary;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      // Center glowing aura
+      const grad = ctx.createRadialGradient(cx, cy, 30, cx, cy, 100 + audioLevel * 30);
+      grad.addColorStop(0, colorPrimary);
+      grad.addColorStop(0.5, colorSecondary);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 100 + audioLevel * 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      angle += 0.015;
+      requestAnimationFrame(drawReactor);
+    }
+    drawReactor();
+
+    // Set UI State
+    function setState(state) {
+      currentState = state;
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      const coreBtn = document.getElementById('coreBtn');
+      const coreBtnText = document.getElementById('coreBtnText');
+
+      text.textContent = state;
+
+      if (state === 'LISTENING') {
+        dot.style.background = '#ff9100';
+        dot.style.boxShadow = '0 0 10px #ff9100';
+        coreBtn.classList.add('listening');
+        coreBtnText.textContent = 'LISTENING';
+      } else if (state === 'PROCESSING') {
+        dot.style.background = '#b388ff';
+        dot.style.boxShadow = '0 0 10px #b388ff';
+        coreBtn.classList.remove('listening');
+        coreBtnText.textContent = 'THINKING';
+      } else if (state === 'SPEAKING') {
+        dot.style.background = '#00f0ff';
+        dot.style.boxShadow = '0 0 10px #00f0ff';
+        coreBtn.classList.remove('listening');
+        coreBtnText.textContent = 'SPEAKING';
+      } else {
+        dot.style.background = '#00f0ff';
+        dot.style.boxShadow = '0 0 10px #00f0ff';
+        coreBtn.classList.remove('listening');
+        coreBtnText.textContent = 'SPEAK';
+      }
+    }
+
+    // Gauge meter updates
+    function updateGauges(cpu, ram) {
+      document.getElementById('cpuVal').textContent = cpu + '%';
+      document.getElementById('ramVal').textContent = ram + '%';
+
+      const maxOffset = 200;
+      const cpuOffset = maxOffset - (cpu / 100) * 175;
+      const ramOffset = maxOffset - (ram / 100) * 175;
+
+      document.getElementById('cpuCircle').style.strokeDashoffset = cpuOffset;
+      document.getElementById('ramCircle').style.strokeDashoffset = ramOffset;
+    }
+
+    // Audio level update from Python
+    window.updateAudioLevel = function(lvl) {
+      targetAudioLevel = lvl;
+    };
+
+    window.updateState = function(state) {
+      setState(state);
+    };
+
+    window.updateTelemetry = function(data) {
+      if (data.cpu !== undefined) updateGauges(data.cpu, data.ram);
+      if (data.battery) document.getElementById('batteryVal').textContent = data.battery;
+      if (data.disk) document.getElementById('diskVal').textContent = data.disk;
+      if (data.uptime) document.getElementById('uptimeVal').textContent = data.uptime;
+      if (data.provider) document.getElementById('providerTag').textContent = 'Provider: ' + data.provider;
+    };
+
+    // Chat transcript handlers
+    function appendMessage(role, text) {
+      const container = document.getElementById('messagesContainer');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'msg ' + role.toLowerCase();
+      msgDiv.innerHTML = `<div class="msg-author">${role}</div>` + text.replace(/\n/g, '<br>');
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+      return msgDiv;
+    }
+
+    let currentStreamDiv = null;
+    window.startJarvisReply = function() {
+      currentStreamDiv = appendMessage('JARVIS', '');
+    };
+
+    window.appendToken = function(token) {
+      if (!currentStreamDiv) window.startJarvisReply();
+      currentStreamDiv.innerHTML += token.replace(/\n/g, '<br>');
+      const container = document.getElementById('messagesContainer');
+      container.scrollTop = container.scrollHeight;
+    };
+
+    window.addMessage = function(role, text) {
+      appendMessage(role, text);
+    };
+
+    function clearTranscript() {
+      document.getElementById('messagesContainer').innerHTML = '';
+    }
+
+    // User actions
+    function sendInput() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      appendMessage('USER', text);
+      setState('PROCESSING');
+
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.send_text(text);
+      }
+    }
+
+    document.getElementById('chatInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendInput();
+    });
+
+    // Hotkey: Spacebar triggers voice when not focused on input
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && document.activeElement !== document.getElementById('chatInput')) {
+        e.preventDefault();
+        toggleVoice();
+      } else if (e.code === 'Escape') {
+        stopSpeech();
+      }
+    });
+
+    function toggleVoice() {
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.toggle_voice();
+      }
+    }
+
+    function stopSpeech() {
+      setState('IDLE');
+      targetAudioLevel = 0;
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.stop_speech();
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      const btn = document.getElementById('muteBtn');
+      btn.classList.toggle('active', isMuted);
+      btn.textContent = isMuted ? '🔇 MUTED' : '🔊 SOUND';
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.toggle_mute(isMuted);
+      }
+    }
+
+    function runQuickTool(toolName) {
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.run_quick_tool(toolName);
+      }
+    }
+  </script>
+</body>
+</html>
