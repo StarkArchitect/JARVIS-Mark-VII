@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jarvis-mark-vii"
+version = "7.0.0"
+description = "Stark Industries J.A.R.V.I.S. Mark VII Autonomous AI Desktop Assistant"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "StarkArchitect" }
+]
+keywords = [
+    "jarvis",
+    "ai-assistant",
+    "stark-industries",
+    "groq",
+    "gemini",
+    "whisper",
+    "edge-tts",
+    "desktop-hud",
+]
+dependencies = [
+    "requests>=2.31.0",
+    "pyyaml>=6.0.1",
+    "pywebview>=5.0.0",
+    "edge-tts>=6.1.9",
+    "pyttsx3>=2.90",
+    "pygame>=2.5.0",
+    "numpy>=1.24.0",
+    "psutil>=5.9.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+jarvis = "main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["jarvis*"]

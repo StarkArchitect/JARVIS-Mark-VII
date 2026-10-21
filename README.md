@@ -4,7 +4,22 @@
 
 ---
 
-## ⚡ Quick Start
+## 🚀 1-Click Quick Launch (Windows)
+
+Choose any of these effortless ways to launch JARVIS without typing terminal commands:
+
+| Method | How to Run | What it Does |
+| :--- | :--- | :--- |
+| **🖥️ Desktop Shortcut** | Double-click **`J.A.R.V.I.S. Mark VII`** on your Desktop | Launches the Holographic Arc Reactor HUD directly from your desktop. |
+| **⚡ 1-Click Batch File** | Double-click **`run.bat`** (or `JARVIS.bat` / `start.bat`) | Auto-checks Python & dependencies, then launches the HUD GUI. |
+| **🎛️ Interactive Launcher**| Run `python launcher.py` | Shows a Stark command center menu with a 5s countdown timer. |
+| **💻 PowerShell Launcher**| Run `powershell .\run.ps1` | Native PowerShell launcher with parameter forwarding. |
+
+> 💡 **Create Desktop Shortcut**: Run `create_shortcut.bat` or `powershell .\create_desktop_shortcut.ps1` to place a shortcut directly on your Windows Desktop.
+
+---
+
+## ⚡ Command-Line Quick Start
 
 ### 1. Run the Diagnostic Test
 Verify your API keys, microphone, speakers, and tools:
